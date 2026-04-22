@@ -7,196 +7,172 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        :root { --blue: #007bff; --green: #28a745; --red: #dc3545; --dark: #343a40; }
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding: 10px; padding-bottom: 100px; }
+        :root { --blue: #007bff; --green: #28a745; --red: #dc3545; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 100px; }
         
-        /* Header */
-        header { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .head-input { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .input-box { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
 
-        /* Observation Cards */
-        .card { background: white; border-radius: 12px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; border: 1px solid #eee; }
-        .preview-img { width: 100%; height: auto; display: block; background: #eee; }
+        .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; border: 1px solid #ddd; }
+        .preview-img { width: 100%; height: auto; display: block; background: #eee; min-height: 200px; }
         
-        .card-actions { padding: 12px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+        .card-body { padding: 15px; }
+        .remark-btn { width: 100%; background: var(--blue); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+        .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; display: block; }
         
-        /* The "Add Remark" Button */
-        .btn-remark-toggle { background: #f8f9fa; color: var(--dark); border: 1px solid #ddd; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
-        /* The Hidden Textbox Container */
-        .remark-container { display: none; margin-top: 5px; }
-        .remark-container.active { display: block; }
-        
-        textarea { width: 100%; padding: 12px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; min-height: 100px; }
-        
-        .del-btn { position: absolute; top: 10px; right: 10px; background: var(--red); color: white; border: none; padding: 8px 12px; border-radius: 50%; font-weight: bold; z-index: 5; }
+        .del-btn { position: absolute; top: 10px; right: 10px; background: var(--red); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; font-size: 20px; }
 
-        /* Navigation */
-        .nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; padding: 15px; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); box-sizing: border-box; gap: 10px; z-index: 1000; }
-        .btn { flex: 1; padding: 16px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; gap: 10px; z-index: 1000; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
         .btn-cam { background: var(--blue); }
         .btn-pdf { background: var(--green); }
-        .btn-reset { background: #6c757d; flex: 0.3; }
+        .btn-reset { background: #666; flex: 0.4; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2 style="margin:0 0 10px 0; color: var(--blue); font-size: 20px;">Store Floor Walk</h2>
-        <input type="text" id="store" class="head-input" placeholder="Store Name" oninput="saveHead()">
-        <input type="text" id="user" class="head-input" placeholder="Your Name" oninput="saveHead()">
-    </header>
+    <div class="header">
+        <h2 style="margin:0; color:var(--blue);">Retail Floor Walk</h2>
+        <input type="text" id="store" class="input-box" placeholder="Store Name" oninput="saveH()">
+        <input type="text" id="user" class="input-box" placeholder="Your Name" oninput="saveH()">
+    </div>
 
     <div id="observation-list"></div>
 
-    <div class="nav">
-        <button class="btn btn-reset" onclick="resetApp()">Reset</button>
-        <button class="btn btn-cam" onclick="document.getElementById('camInput').click()">📸 Take Photo</button>
-        <button class="btn btn-pdf" onclick="generatePDF()">📄 Export PDF</button>
+    <div class="footer">
+        <button class="btn btn-reset" onclick="resetApp()">Clear</button>
+        <button class="btn btn-cam" onclick="document.getElementById('file-in').click()">📸 Take Photo</button>
+        <button class="btn btn-pdf" onclick="makePDF()">📄 PDF</button>
     </div>
 
-    <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none" onchange="processImage(this)">
+    <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
 
     <div style="display:none">
-        <div id="pdf-area" style="padding:20px; font-family: Arial;">
-            <h1 id="pdf-title" style="color:#007bff; border-bottom: 3px solid #007bff; padding-bottom:10px;">Floor Walk Audit Report</h1>
-            <p id="pdf-info" style="font-size:14px; margin-bottom:20px;"></p>
-            <div id="pdf-items"></div>
+        <div id="pdf-box" style="padding:20px;">
+            <h1 style="color:#007bff; border-bottom: 2px solid #007bff;">Floor Walk Report</h1>
+            <p id="pdf-meta"></p>
+            <div id="pdf-list"></div>
         </div>
     </div>
 
 <script>
-    let observations = JSON.parse(localStorage.getItem('audit_obs')) || [];
+    let obs = JSON.parse(localStorage.getItem('audit_obs')) || [];
 
     window.onload = () => {
-        document.getElementById('store').value = localStorage.getItem('audit_store_name') || '';
-        document.getElementById('user').value = localStorage.getItem('audit_user_name') || '';
-        renderItems();
+        document.getElementById('store').value = localStorage.getItem('audit_st') || '';
+        document.getElementById('user').value = localStorage.getItem('audit_us') || '';
+        render();
     };
 
-    function saveHead() {
-        localStorage.setItem('audit_store_name', document.getElementById('store').value);
-        localStorage.setItem('audit_user_name', document.getElementById('user').value);
+    function saveH() {
+        localStorage.setItem('audit_st', document.getElementById('store').value);
+        localStorage.setItem('audit_us', document.getElementById('user').value);
     }
 
-    function processImage(input) {
+    function handleFile(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                observations.push({ 
-                    id: Date.now(), 
-                    img: e.target.result, 
-                    text: '',
-                    showInput: false // Track if text box is open
-                });
-                sync();
-                renderItems();
-                // Scroll to bottom so you see the new photo
-                window.scrollTo(0, document.body.scrollHeight);
+                // COMPRESSION LOGIC
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const maxWidth = 800; // Resize to max 800px width
+                    const scale = maxWidth / img.width;
+                    canvas.width = maxWidth;
+                    canvas.height = img.height * scale;
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+                    
+                    obs.push({ id: Date.now(), src: compressedData, txt: '', open: true });
+                    localStorage.setItem('audit_obs', JSON.stringify(obs));
+                    render();
+                    window.scrollTo(0, document.body.scrollHeight);
+                };
             };
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function toggleRemark(id) {
-        const item = observations.find(o => o.id === id);
-        if (item) {
-            item.showInput = !item.showInput;
-            renderItems();
-        }
-    }
-
-    function updateText(id, val) {
-        const item = observations.find(o => o.id === id);
-        if (item) {
-            item.text = val;
-            sync();
-        }
-    }
-
-    function sync() {
-        localStorage.setItem('audit_obs', JSON.stringify(observations));
-    }
-
-    function renderItems() {
-        const container = document.getElementById('observation-list');
-        container.innerHTML = observations.length === 0 ? 
-            '<div style="text-align:center; padding:50px 20px; color:#888;">No photos yet. Use the blue button to capture a concern.</div>' : '';
+    function render() {
+        const list = document.getElementById('observation-list');
+        list.innerHTML = '';
         
-        observations.forEach(obs => {
+        if (obs.length === 0) {
+            list.innerHTML = '<p style="text-align:center; padding:50px 0; color:#888;">No observations yet. Tap the blue button.</p>';
+            return;
+        }
+
+        obs.forEach(item => {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
-                <button class="del-btn" onclick="removeObs(${obs.id})">✕</button>
-                <img src="${obs.img}" class="preview-img">
-                <div class="card-actions">
-                    <button class="btn-remark-toggle" onclick="toggleRemark(${obs.id})">
-                        ${obs.text ? '✅ Edit Remark' : '✍️ Add Remark / Suggestion'}
-                    </button>
-                    <div class="remark-container ${obs.showInput ? 'active' : ''}">
-                        <textarea oninput="updateText(${obs.id}, this.value)" placeholder="Type your observation or action point here...">${obs.text}</textarea>
+                <button class="del-btn" onclick="del(${item.id})">×</button>
+                <img src="${item.src}" class="preview-img">
+                <div class="card-body">
+                    <button class="remark-btn" onclick="toggle(${item.id})">✍️ Add/Edit Remarks</button>
+                    <div id="box-${item.id}" style="display: ${item.open ? 'block' : 'none'};">
+                        <textarea class="remark-text" placeholder="Type here..." oninput="upd(${item.id}, this.value)">${item.txt}</textarea>
                     </div>
                 </div>
             `;
-            container.appendChild(card);
+            list.appendChild(card);
         });
     }
 
-    function removeObs(id) {
-        if(confirm('Delete this observation?')) {
-            observations = observations.filter(o => o.id !== id);
-            sync();
-            renderItems();
+    function toggle(id) {
+        const target = obs.find(i => i.id === id);
+        if (target) {
+            target.open = !target.open;
+            render();
+        }
+    }
+
+    function upd(id, val) {
+        const target = obs.find(i => i.id === id);
+        if (target) {
+            target.txt = val;
+            localStorage.setItem('audit_obs', JSON.stringify(obs));
+        }
+    }
+
+    function del(id) {
+        if(confirm('Delete?')) {
+            obs = obs.filter(i => i.id !== id);
+            localStorage.setItem('audit_obs', JSON.stringify(obs));
+            render();
         }
     }
 
     function resetApp() {
-        if(confirm('This will delete all current photos and text. Continue?')) {
+        if(confirm('Clear all data?')) {
             localStorage.clear();
             location.reload();
         }
     }
 
-    async function generatePDF() {
-        const store = document.getElementById('store').value || 'Store';
-        const user = document.getElementById('user').value || 'Auditor';
-        const date = new Date().toLocaleDateString();
+    async function makePDF() {
+        const s = document.getElementById('store').value || 'Store';
+        const u = document.getElementById('user').value || 'Auditor';
+        document.getElementById('pdf-meta').innerText = `Store: ${s} | By: ${u} | Date: ${new Date().toLocaleDateString()}`;
         
-        document.getElementById('pdf-info').innerHTML = `<strong>Store:</strong> ${store} | <strong>Auditor:</strong> ${user} | <strong>Date:</strong> ${date}`;
-        
-        const list = document.getElementById('pdf-items');
-        list.innerHTML = '';
-        
-        observations.forEach((obs, i) => {
-            list.innerHTML += `
-                <div style="margin-bottom:40px; page-break-inside:avoid; border-bottom:1px solid #eee; padding-bottom:20px;">
-                    <h3 style="color:#007bff;">Point ${i+1}</h3>
-                    <img src="${obs.img}" style="width:100%; border-radius:8px; margin-bottom:10px;">
-                    <div style="padding:15px; background:#f8f9fa; border-left:5px solid #007bff;">
-                        <strong>Remarks:</strong><br>
-                        <p style="margin:5px 0 0 0; white-space: pre-wrap;">${obs.text || 'No remarks added.'}</p>
-                    </div>
+        const pdfL = document.getElementById('pdf-list');
+        pdfL.innerHTML = '';
+        obs.forEach((item, index) => {
+            pdfL.innerHTML += `
+                <div style="margin-bottom:30px; page-break-inside:avoid;">
+                    <h3>Point ${index + 1}</h3>
+                    <img src="${item.src}" style="width:100%; border-radius:5px;">
+                    <p style="padding:10px; background:#f9f9f9; border-left:5px solid #007bff;">${item.txt || 'No remarks.'}</p>
                 </div>`;
         });
 
-        const opt = { 
-            margin: 10, 
-            filename: `Audit_${store}_${date}.pdf`, 
-            image: { type: 'jpeg', quality: 0.95 }, 
-            html2canvas: { scale: 2 }, 
-            jsPDF: { format: 'a4', orientation: 'portrait' } 
-        };
-
-        const pdfBtn = document.querySelector('.btn-pdf');
-        pdfBtn.innerText = "Generating...";
-        
         try {
-            await html2pdf().set(opt).from(document.getElementById('pdf-area')).save();
-        } catch (e) { 
-            alert('Error creating PDF. Try with fewer photos.'); 
-        } finally {
-            pdfBtn.innerHTML = "📄 Export PDF";
-        }
+            await html2pdf().set({ margin:10, filename:`Audit_${s}.pdf`, html2canvas:{scale:2}, jsPDF:{format:'a4'} }).from(document.getElementById('pdf-box')).save();
+        } catch (e) { alert('Error: ' + e); }
     }
 </script>
 </body>
