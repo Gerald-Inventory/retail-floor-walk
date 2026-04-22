@@ -3,176 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retail Audit Pro</title>
+    <title>Retail Audit Pro - Step Logic</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        :root { --blue: #007bff; --green: #28a745; --red: #dc3545; }
+        :root { --blue: #007bff; --green: #28a745; --red: #dc3545; --dark: #333; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 100px; }
         
-        .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); }
         .input-box { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
 
-        .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; border: 1px solid #ddd; }
-        .preview-img { width: 100%; height: auto; display: block; background: #eee; min-height: 200px; }
+        .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; position: relative; }
+        .preview-img { width: 100%; height: auto; display: block; background: #eee; }
         
         .card-body { padding: 15px; }
-        .remark-btn { width: 100%; background: var(--blue); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; margin-bottom: 10px; font-size: 16px; }
-        .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; display: block; }
+        .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 10px; }
         
-        .del-btn { position: absolute; top: 10px; right: 10px; background: var(--red); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; font-size: 20px; }
+        /* Workflow Buttons */
+        .btn-save-next { width: 100%; background: var(--green); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .del-btn { position: absolute; top: 10px; right: 10px; background: var(--red); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; }
 
-        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; gap: 10px; z-index: 1000; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; gap: 10px; z-index: 1000; }
+        .btn-main { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-cam { background: var(--blue); }
-        .btn-pdf { background: var(--green); }
-        .btn-reset { background: #666; flex: 0.4; }
+        .btn-export { background: var(--dark); }
+        
+        .badge { display: inline-block; background: var(--blue); color: white; padding: 20px; border-radius: 10px; margin-bottom: 10px; width: 100%; box-sizing: border-box; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h2 style="margin:0; color:var(--blue);">Retail Floor Walk</h2>
-        <input type="text" id="store" class="input-box" placeholder="Store Name" oninput="saveH()">
-        <input type="text" id="user" class="input-box" placeholder="Your Name" oninput="saveH()">
+        <input type="text" id="store" class="input-box" placeholder="Store Name" oninput="saveHeaders()">
+        <input type="text" id="user" class="input-box" placeholder="Auditor Name" oninput="saveHeaders()">
     </div>
 
     <div id="observation-list"></div>
 
-    <div class="footer">
-        <button class="btn btn-reset" onclick="resetApp()">Clear</button>
-        <button class="btn btn-cam" onclick="document.getElementById('file-in').click()">📸 Take Photo</button>
-        <button class="btn btn-pdf" onclick="makePDF()">📄 PDF</button>
+    <div id="action-zone" style="text-align:center; padding: 20px 0;">
+        <div class="badge" id="counter-badge">Ready for Point #1</div>
+        <button class="btn-main btn-cam" style="width:100%" onclick="document.getElementById('camera-in').click()">📸 Take Picture</button>
     </div>
 
-    <input type="file" id="file-in" accept="image/*" capture="environment" style="display:none" onchange="handleFile(this)">
+    <div class="footer-nav">
+        <button class="btn-main btn-export" onclick="generateReport()">📄 Export Final PDF</button>
+        <button onclick="clearAll()" style="background:none; border:none; color:var(--red); font-size:12px;">Reset All</button>
+    </div>
+
+    <input type="file" id="camera-in" accept="image/*" capture="environment" style="display:none" onchange="handleNewPhoto(this)">
 
     <div style="display:none">
-        <div id="pdf-box" style="padding:20px;">
-            <h1 style="color:#007bff; border-bottom: 2px solid #007bff;">Floor Walk Report</h1>
-            <p id="pdf-meta"></p>
-            <div id="pdf-list"></div>
+        <div id="pdf-container" style="padding:30px; font-family: Arial, sans-serif;">
+            <h1 style="color:#007bff; border-bottom: 3px solid #007bff; padding-bottom: 10px;">Store Visit Report</h1>
+            <p id="pdf-header-info" style="font-size:16px; margin-bottom:20px;"></p>
+            <div id="pdf-content-list"></div>
         </div>
     </div>
 
 <script>
-    let obs = JSON.parse(localStorage.getItem('audit_obs')) || [];
+    let observations = JSON.parse(localStorage.getItem('walk_data')) || [];
 
     window.onload = () => {
-        document.getElementById('store').value = localStorage.getItem('audit_st') || '';
-        document.getElementById('user').value = localStorage.getItem('audit_us') || '';
-        render();
+        document.getElementById('store').value = localStorage.getItem('walk_store') || '';
+        document.getElementById('user').value = localStorage.getItem('walk_user') || '';
+        updateUI();
     };
 
-    function saveH() {
-        localStorage.setItem('audit_st', document.getElementById('store').value);
-        localStorage.setItem('audit_us', document.getElementById('user').value);
+    function saveHeaders() {
+        localStorage.setItem('walk_store', document.getElementById('store').value);
+        localStorage.setItem('walk_user', document.getElementById('user').value);
     }
 
-    function handleFile(input) {
+    function handleNewPhoto(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                // COMPRESSION LOGIC
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
+                    // Image Compression for stability
                     const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const maxWidth = 800; // Resize to max 800px width
+                    const maxWidth = 800;
                     const scale = maxWidth / img.width;
                     canvas.width = maxWidth;
                     canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    const compressedData = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
                     
-                    obs.push({ id: Date.now(), src: compressedData, txt: '', open: true });
-                    localStorage.setItem('audit_obs', JSON.stringify(obs));
-                    render();
-                    window.scrollTo(0, document.body.scrollHeight);
+                    // Create a "Draft" observation
+                    const newPoint = {
+                        id: Date.now(),
+                        img: compressed,
+                        remark: '',
+                        isSaved: false
+                    };
+                    
+                    observations.push(newPoint);
+                    sync();
+                    updateUI();
+                    
+                    // Hide the "Take Picture" button until this one is saved
+                    document.getElementById('action-zone').style.display = 'none';
                 };
             };
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function render() {
+    function sync() {
+        localStorage.setItem('walk_data', JSON.stringify(observations));
+    }
+
+    function savePoint(id) {
+        const item = observations.find(o => o.id === id);
+        const remarkInput = document.querySelector(`#remark-${id}`);
+        
+        if (item && remarkInput) {
+            item.remark = remarkInput.value;
+            item.isSaved = true;
+            sync();
+            updateUI();
+            
+            // Show the "Take Picture" button again for the next point
+            document.getElementById('action-zone').style.display = 'block';
+            document.getElementById('counter-badge').innerText = `Ready for Point #${observations.length + 1}`;
+            
+            // Scroll to the very bottom
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+    }
+
+    function updateUI() {
         const list = document.getElementById('observation-list');
         list.innerHTML = '';
         
-        if (obs.length === 0) {
-            list.innerHTML = '<p style="text-align:center; padding:50px 0; color:#888;">No observations yet. Tap the blue button.</p>';
-            return;
-        }
-
-        obs.forEach(item => {
+        observations.forEach((obs, index) => {
             const card = document.createElement('div');
             card.className = 'card';
-            card.innerHTML = `
-                <button class="del-btn" onclick="del(${item.id})">×</button>
-                <img src="${item.src}" class="preview-img">
-                <div class="card-body">
-                    <button class="remark-btn" onclick="toggle(${item.id})">✍️ Add/Edit Remarks</button>
-                    <div id="box-${item.id}" style="display: ${item.open ? 'block' : 'none'};">
-                        <textarea class="remark-text" placeholder="Type here..." oninput="upd(${item.id}, this.value)">${item.txt}</textarea>
+            
+            if (!obs.isSaved) {
+                // Editing Mode
+                card.innerHTML = `
+                    <img src="${obs.img}" class="preview-img">
+                    <div class="card-body">
+                        <label style="font-weight:bold; color:var(--blue);">Point #${index+1} Remarks:</label>
+                        <textarea id="remark-${obs.id}" class="remark-text" placeholder="Describe the concern and suggest action..."></textarea>
+                        <button class="btn-save-next" onclick="savePoint(${obs.id})">💾 Save & Add Next Picture</button>
                     </div>
-                </div>
-            `;
+                `;
+                document.getElementById('action-zone').style.display = 'none';
+            } else {
+                // Saved Mode
+                card.innerHTML = `
+                    <button class="del-btn" onclick="deletePoint(${obs.id})">×</button>
+                    <img src="${obs.img}" class="preview-img">
+                    <div class="card-body" style="background:#f8f9fa;">
+                        <p style="margin:0;"><strong>Point #${index+1}:</strong> ${obs.remark}</p>
+                    </div>
+                `;
+                document.getElementById('action-zone').style.display = 'block';
+            }
             list.appendChild(card);
         });
-    }
 
-    function toggle(id) {
-        const target = obs.find(i => i.id === id);
-        if (target) {
-            target.open = !target.open;
-            render();
+        if(observations.length === 0) {
+            document.getElementById('counter-badge').innerText = "Ready for Point #1";
+        } else {
+            document.getElementById('counter-badge').innerText = `Ready for Point #${observations.length + 1}`;
         }
     }
 
-    function upd(id, val) {
-        const target = obs.find(i => i.id === id);
-        if (target) {
-            target.txt = val;
-            localStorage.setItem('audit_obs', JSON.stringify(obs));
+    function deletePoint(id) {
+        if(confirm("Delete this point?")) {
+            observations = observations.filter(o => o.id !== id);
+            sync();
+            updateUI();
+            document.getElementById('action-zone').style.display = 'block';
         }
     }
 
-    function del(id) {
-        if(confirm('Delete?')) {
-            obs = obs.filter(i => i.id !== id);
-            localStorage.setItem('audit_obs', JSON.stringify(obs));
-            render();
-        }
-    }
-
-    function resetApp() {
-        if(confirm('Clear all data?')) {
+    function clearAll() {
+        if(confirm("Start a completely new walk? All data will be lost.")) {
             localStorage.clear();
             location.reload();
         }
     }
 
-    async function makePDF() {
-        const s = document.getElementById('store').value || 'Store';
-        const u = document.getElementById('user').value || 'Auditor';
-        document.getElementById('pdf-meta').innerText = `Store: ${s} | By: ${u} | Date: ${new Date().toLocaleDateString()}`;
+    async function generateReport() {
+        const store = document.getElementById('store').value || 'Unknown Store';
+        const auditor = document.getElementById('user').value || 'Auditor';
+        const date = new Date().toLocaleDateString();
+
+        document.getElementById('pdf-header-info').innerHTML = `<strong>Store:</strong> ${store} <br> <strong>Auditor:</strong> ${auditor} <br> <strong>Date:</strong> ${date}`;
         
-        const pdfL = document.getElementById('pdf-list');
-        pdfL.innerHTML = '';
-        obs.forEach((item, index) => {
-            pdfL.innerHTML += `
-                <div style="margin-bottom:30px; page-break-inside:avoid;">
-                    <h3>Point ${index + 1}</h3>
-                    <img src="${item.src}" style="width:100%; border-radius:5px;">
-                    <p style="padding:10px; background:#f9f9f9; border-left:5px solid #007bff;">${item.txt || 'No remarks.'}</p>
-                </div>`;
+        const contentList = document.getElementById('pdf-content-list');
+        contentList.innerHTML = '';
+
+        observations.filter(o => o.isSaved).forEach((obs, index) => {
+            contentList.innerHTML += `
+                <div style="margin-bottom:40px; page-break-inside:avoid; border-bottom:2px solid #eee; padding-bottom:20px;">
+                    <h2 style="color:#007bff;">Point ${index + 1}</h2>
+                    <img src="${obs.img}" style="width:100%; border-radius:10px; margin-bottom:15px;">
+                    <div style="padding:15px; background:#f9f9f9; border-left:6px solid #007bff; font-size:16px;">
+                        <strong>Observation & Suggestions:</strong><br>
+                        ${obs.remark}
+                    </div>
+                </div>
+            `;
         });
 
+        const opt = { 
+            margin: 10, 
+            filename: `FloorWalk_${store}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { format: 'a4', orientation: 'portrait' } 
+        };
+
         try {
-            await html2pdf().set({ margin:10, filename:`Audit_${s}.pdf`, html2canvas:{scale:2}, jsPDF:{format:'a4'} }).from(document.getElementById('pdf-box')).save();
-        } catch (e) { alert('Error: ' + e); }
+            await html2pdf().set(opt).from(document.getElementById('pdf-container')).save();
+        } catch (e) { alert("Error generating PDF"); }
     }
 </script>
 </body>
