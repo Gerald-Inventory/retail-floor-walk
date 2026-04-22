@@ -1,38 +1,45 @@
-<script>
-    function renderObservations() {
-        const list = document.getElementById('observations-list');
-        list.innerHTML = ''; // Clear the list
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Walk Pro - Audit Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --gray: #6c757d; }
+        body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f7f6; margin: 0; padding: 10px; padding-bottom: 100px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         
-        if (observations.length === 0) {
-            list.innerHTML = `<p style="text-align:center; color:#999; margin:40px 0;">No concerns captured yet. Tap the blue button to start.</p>`;
-            return;
-        }
+        /* Header Info */
+        .header-section { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        .input-field { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
         
-        observations.forEach(obs => {
-            const card = document.createElement('div');
-            card.className = 'observation-card';
-            card.innerHTML = `
-                <button class="delete-btn" onclick="deleteObs(${obs.id})">×</button>
-                <img src="${obs.image}" class="obs-image">
-                <div class="obs-content">
-                    <label style="font-weight:bold; font-size:12px; color:var(--primary); display:block; margin-bottom:5px;">REMARKS & SUGGESTIONS:</label>
-                    <textarea class="input-field" 
-                        style="height:100px; border:2px solid #eee; background:#fff;" 
-                        placeholder="Describe the issue and required action..." 
-                        oninput="updateRemark(${obs.id}, this.value)">${obs.remark}</textarea>
-                </div>
-            `;
-            list.appendChild(card);
-        });
-    }
+        /* Observation Cards */
+        .observation-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 20px; overflow: hidden; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .obs-image { width: 100%; height: auto; max-height: 400px; object-fit: cover; background: #eee; display: block; }
+        .obs-content { padding: 15px; background: #fafafa; }
+        .remark-label { font-weight: bold; font-size: 12px; color: var(--primary); display: block; margin-bottom: 8px; text-transform: uppercase; }
+        .remark-area { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 6px; font-size: 14px; min-height: 80px; resize: vertical; box-sizing: border-box; }
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; }
+        
+        /* Control Buttons (Floating at bottom) */
+        .controls { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 10px; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 100; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-capture { background: var(--primary); }
+        .btn-export { background: var(--success); }
+        .btn-clear { background: var(--gray); flex: 0.3; }
 
-    // This ensures data is saved character-by-character as you type
-    function updateRemark(id, text) {
-        const obs = observations.find(o => o.id === id);
-        if (obs) {
-            obs.remark = text;
-            // Silently save to localStorage without re-rendering
-            localStorage.setItem('floorWalkObs', JSON.stringify(observations));
-        }
-    }
-</script>
+        /* PDF Layout Styling */
+        #pdf-content { padding: 20px; font-family: Arial, sans-serif; }
+        .pdf-header { border-bottom: 4px solid var(--primary); margin-bottom: 20px; }
+        .pdf-item { margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .pdf-item img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+
+<div class="container">
+    <div class="header-section
