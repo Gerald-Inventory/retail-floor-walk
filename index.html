@@ -2,44 +2,145 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retail Walk Pro - Audit Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retail Walk Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --gray: #6c757d; }
-        body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #f4f7f6; margin: 0; padding: 10px; padding-bottom: 100px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        :root { --blue: #007bff; --green: #28a745; --red: #dc3545; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 90px; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
         
-        /* Header Info */
-        .header-section { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
-        .input-field { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        /* Header */
+        header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 3px solid var(--blue); }
+        input, textarea { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
         
-        /* Observation Cards */
-        .observation-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 20px; overflow: hidden; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .obs-image { width: 100%; height: auto; max-height: 400px; object-fit: cover; background: #eee; display: block; }
-        .obs-content { padding: 15px; background: #fafafa; }
-        .remark-label { font-weight: bold; font-size: 12px; color: var(--primary); display: block; margin-bottom: 8px; text-transform: uppercase; }
-        .remark-area { width: 100%; padding: 10px; border: 2px solid #eee; border-radius: 6px; font-size: 14px; min-height: 80px; resize: vertical; box-sizing: border-box; }
-        .delete-btn { position: absolute; top: 10px; right: 10px; background: rgba(220, 53, 69, 0.9); color: white; border: none; padding: 8px 12px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; }
+        /* Images */
+        .preview-img { width: 100%; border-radius: 5px; display: block; margin-bottom: 10px; background: #ddd; min-height: 150px; }
+        .del-btn { position: absolute; top: 5px; right: 5px; background: var(--red); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; }
         
-        /* Control Buttons (Floating at bottom) */
-        .controls { position: fixed; bottom: 0; left: 0; right: 0; display: flex; gap: 10px; background: white; padding: 15px; border-top: 1px solid #ddd; z-index: 100; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-capture { background: var(--primary); }
-        .btn-export { background: var(--success); }
-        .btn-clear { background: var(--gray); flex: 0.3; }
-
-        /* PDF Layout Styling */
-        #pdf-content { padding: 20px; font-family: Arial, sans-serif; }
-        .pdf-header { border-bottom: 4px solid var(--primary); margin-bottom: 20px; }
-        .pdf-item { margin-bottom: 30px; page-break-inside: avoid; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .pdf-item img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; }
+        /* Footer Controls */
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); box-sizing: border-box; gap: 10px; z-index: 999; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; text-align: center; }
+        .btn-cam { background: var(--blue); }
+        .btn-pdf { background: var(--green); }
+        .btn-reset { background: #666; flex: 0.4; }
     </style>
 </head>
 <body>
 
-<audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+    <header>
+        <h2 style="margin:0; color: var(--blue);">Floor Walk Audit</h2>
+        <input type="text" id="store" placeholder="Store Name" oninput="saveInfo()">
+        <input type="text" id="user" placeholder="Your Name" oninput="saveInfo()">
+    </header>
 
-<div class="container">
-    <div class="header-section
+    <div id="list"></div>
+
+    <div class="nav-bar">
+        <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+        <button class="btn btn-cam" onclick="document.getElementById('cam').click()">📸 Take Photo</button>
+        <button class="btn btn-pdf" onclick="makePDF()">📄 PDF</button>
+    </div>
+
+    <input type="file" id="cam" accept="image/*" capture="environment" style="display:none" onchange="addPoint(this)">
+
+    <div style="display:none">
+        <div id="pdf-box" style="padding:20px;">
+            <h1 id="p-title" style="color:#007bff; border-bottom: 2px solid #007bff;">Report</h1>
+            <p id="p-meta"></p>
+            <div id="p-list"></div>
+        </div>
+    </div>
+
+<script>
+    let data = JSON.parse(localStorage.getItem('audit_data')) || [];
+
+    // Load initial data
+    window.onload = () => {
+        document.getElementById('store').value = localStorage.getItem('audit_store') || '';
+        document.getElementById('user').value = localStorage.getItem('audit_user') || '';
+        render();
+    };
+
+    function saveInfo() {
+        localStorage.setItem('audit_store', document.getElementById('store').value);
+        localStorage.setItem('audit_user', document.getElementById('user').value);
+    }
+
+    function addPoint(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                data.push({ id: Date.now(), img: e.target.result, txt: '' });
+                localStorage.setItem('audit_data', JSON.stringify(data));
+                render();
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function updateTxt(id, val) {
+        const item = data.find(i => i.id === id);
+        if (item) {
+            item.txt = val;
+            localStorage.setItem('audit_data', JSON.stringify(data));
+        }
+    }
+
+    function render() {
+        const container = document.getElementById('list');
+        container.innerHTML = data.length === 0 ? '<p style="text-align:center; padding:20px;">No photos yet.</p>' : '';
+        
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <button class="del-btn" onclick="del(${item.id})">X</button>
+                <img src="${item.img}" class="preview-img">
+                <strong>Remarks:</strong>
+                <textarea oninput="updateTxt(${item.id}, this.value)" placeholder="Enter suggestion...">${item.txt}</textarea>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function del(id) {
+        if(confirm('Delete?')) {
+            data = data.filter(i => i.id !== id);
+            localStorage.setItem('audit_data', JSON.stringify(data));
+            render();
+        }
+    }
+
+    function resetAll() {
+        if(confirm('Clear all?')) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    async function makePDF() {
+        const store = document.getElementById('store').value || 'Store';
+        const user = document.getElementById('user').value || 'Auditor';
+        document.getElementById('p-meta').innerHTML = `<b>Store:</b> ${store} | <b>By:</b> ${user} | <b>Date:</b> ${new Date().toLocaleDateString()}`;
+        
+        const list = document.getElementById('p-list');
+        list.innerHTML = '';
+        data.forEach((item, idx) => {
+            list.innerHTML += `
+                <div style="margin-bottom:30px; page-break-inside:avoid;">
+                    <h3>Point ${idx+1}</h3>
+                    <img src="${item.img}" style="width:100%; border-radius:5px;">
+                    <p style="padding:10px; background:#f9f9f9; border-left:5px solid #007bff;">${item.txt || 'No remarks.'}</p>
+                </div>`;
+        });
+
+        const opt = { margin:10, filename:`Audit_${store}.pdf`, image:{type:'jpeg', quality:0.95}, html2canvas:{scale:2}, jsPDF:{format:'a4'} };
+        try {
+            await html2pdf().set(opt).from(document.getElementById('pdf-box')).save();
+        } catch (e) { alert('PDF Error'); }
+    }
+</script>
+</body>
+</html>
