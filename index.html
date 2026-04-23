@@ -27,49 +27,40 @@
         .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
 
         /* --- PDF EXPORT DESIGN --- */
-        #pdf-container { 
-            padding: 30px; 
-            color: #000; 
-            background: white; 
-            border: 5px double #000; /* Full 4-side border */
-            display: none; 
-            width: 700px; 
-            margin: 0 auto;
-        }
-        .pdf-report-title { text-align: center; text-transform: uppercase; margin-bottom: 10px; font-size: 26px; font-weight: 900; }
-        .pdf-meta { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; font-size: 14px; font-weight: bold; }
+        #pdf-container { display: none; background: #fff; width: 800px; }
         
-        .pdf-item-block { 
-            margin-bottom: 40px; 
-            page-break-inside: avoid; 
+        .pdf-page {
+            padding: 40px;
+            box-sizing: border-box;
+            border: 8px double #000; /* Full 4-side border */
+            height: 1120px; /* Approximate A4 height in px */
+            position: relative;
+            page-break-after: always;
+            overflow: hidden;
+        }
+
+        .pdf-report-title { text-align: center; text-transform: uppercase; margin-bottom: 5px; font-size: 24px; font-weight: 900; }
+        .pdf-meta { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; font-size: 14px; }
+        
+        .pdf-row { 
             display: flex; 
-            flex-direction: column;
+            margin-bottom: 15px; 
+            align-items: flex-start;
+            gap: 15px;
         }
-        .pdf-point-label { 
-            font-size: 16px; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            margin-bottom: 5px;
-            align-self: flex-start; /* Aligns to left border */
-        }
-        .pdf-img-frame { 
+
+        .pdf-col-img { width: 40%; }
+        .pdf-col-img img { 
             width: 100%; 
-            border: 1px solid #000; 
-            margin-bottom: 10px;
+            border: 2px solid #333; /* Small border around picture */
+            border-radius: 4px;
+            max-height: 180px;
+            object-fit: cover;
         }
-        .pdf-img-frame img { 
-            width: 100%; 
-            max-height: 400px; 
-            object-fit: contain; 
-            display: block; 
-        }
-        .pdf-remark-area { 
-            font-size: 24px; /* Bigger remarks */
-            font-weight: bold; 
-            line-height: 1.3; 
-            padding: 5px 0;
-            color: #000;
-        }
+
+        .pdf-col-text { width: 60%; }
+        .pdf-point-label { font-size: 12px; color: #666; font-weight: bold; margin-bottom: 4px; display: block; }
+        .pdf-remark-val { font-size: 18px; font-weight: bold; line-height: 1.2; color: #000; }
     </style>
 </head>
 <body>
@@ -94,11 +85,7 @@
 
     <input type="file" id="camera-in" accept="image/*" capture="environment" style="display:none" onchange="handleNewPhoto(this)">
 
-    <div id="pdf-container">
-        <h1 class="pdf-report-title">Store Visit Points</h1>
-        <div class="pdf-meta" id="pdf-meta-data"></div>
-        <div id="pdf-content-list"></div>
-    </div>
+    <div id="pdf-container"></div>
 
 <script>
     let obs = JSON.parse(localStorage.getItem('walk_v2')) || [];
@@ -185,29 +172,54 @@
         const store = document.getElementById('store').value || 'N/A';
         const auditor = document.getElementById('user').value || 'N/A';
         const pdfContainer = document.getElementById('pdf-container');
-        const contentList = document.getElementById('pdf-content-list');
-        const meta = document.getElementById('pdf-meta-data');
-
         const saved = obs.filter(o => o.isSaved);
         if(!saved.length) return alert("Save points first!");
 
         pdfContainer.style.display = 'block';
-        meta.innerHTML = `<span>STORE: ${store}</span><span>AUDITOR: ${auditor}</span><span>DATE: ${new Date().toLocaleDateString()}</span>`;
-        contentList.innerHTML = '';
+        pdfContainer.innerHTML = '';
+        
+        let currentIdx = 0;
+        let pageNum = 1;
 
-        saved.forEach((item, index) => {
-            contentList.innerHTML += `
-                <div class="pdf-item-block">
-                    <div class="pdf-point-label">STORE VISIT POINT #${index + 1}</div>
-                    <div class="pdf-img-frame">
-                        <img src="${item.img}">
-                    </div>
-                    <div class="pdf-remark-area">${item.remark}</div>
-                </div>`;
-        });
+        while (currentIdx < saved.length) {
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            
+            // Header for every page
+            pageDiv.innerHTML = `
+                <h1 class="pdf-report-title">Store Visit Points</h1>
+                <div class="pdf-meta">
+                    <span>STORE: ${store}</span>
+                    <span>AUDITOR: ${auditor}</span>
+                    <span>DATE: ${new Date().toLocaleDateString()}</span>
+                </div>
+            `;
+
+            // Determine how many items for this page
+            const itemsPerPage = (pageNum === 1) ? 3 : 4;
+            const pageItems = saved.slice(currentIdx, currentIdx + itemsPerPage);
+
+            pageItems.forEach((item, i) => {
+                const globalIdx = currentIdx + i + 1;
+                pageDiv.innerHTML += `
+                    <div class="pdf-row">
+                        <div class="pdf-col-img">
+                            <span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>
+                            <img src="${item.img}">
+                        </div>
+                        <div class="pdf-col-text">
+                            <div style="margin-top:20px;" class="pdf-remark-val">${item.remark}</div>
+                        </div>
+                    </div>`;
+            });
+
+            pdfContainer.appendChild(pageDiv);
+            currentIdx += itemsPerPage;
+            pageNum++;
+        }
 
         const opt = { 
-            margin: 5, 
+            margin: 0, 
             filename: `StoreVisit_${store}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2 }, 
