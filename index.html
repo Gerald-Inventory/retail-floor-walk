@@ -8,10 +8,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        :root { --blue: #007bff; --green: #28a745; --orange: #fd7e14; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 120px; }
+        :root { --blue: #007bff; --green: #28a745; --orange: #fd7e14; --dark: #333; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 140px; }
         
-        /* Mobile App UI */
+        /* --- Mobile App UI Styling --- */
         .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); }
         .input-box { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; position: relative; }
@@ -20,19 +20,30 @@
         .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 10px; }
         .btn-save-next { width: 100%; background: var(--green); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; }
         
-        /* Multi-Export Footer */
-        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 1000; }
+        /* --- Footer & Buttons --- */
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 1000; box-sizing: border-box; }
         .btn-export { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; }
-        .bg-pdf { background: #333; }
+        .bg-pdf { background: var(--dark); }
         .bg-excel { background: var(--orange); }
-        .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; }
+        .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; width: 100%; }
 
-        /* PDF Formatting */
-        #pdf-container { padding: 20px; color: #000; display: none; }
-        .pdf-row { display: flex; margin-bottom: 15px; border: 1px solid #eee; page-break-inside: avoid; }
-        .pdf-col-left { width: 35%; padding: 10px; }
-        .pdf-col-right { width: 65%; padding: 10px; }
-        .pdf-img { width: 100%; border-radius: 4px; }
+        /* --- PDF EXPORT DESIGN (Hidden on Screen) --- */
+        #pdf-container { 
+            padding: 40px; 
+            color: #000; 
+            background: white; 
+            border: 10px double #333; /* The Global Boarder */
+            display: none; 
+            width: 750px; /* Fixed width for consistent scaling */
+        }
+        .pdf-report-title { text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-size: 28px; }
+        .pdf-meta-section { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; font-size: 16px; }
+        .pdf-item-card { display: flex; border: 1px solid #ccc; margin-bottom: 25px; page-break-inside: avoid; background: #fff; }
+        .pdf-photo-box { width: 40%; border-right: 1px solid #ccc; background: #f9f9f9; display: flex; align-items: center; justify-content: center; }
+        .pdf-photo-box img { width: 100%; height: 250px; object-fit: cover; display: block; }
+        .pdf-text-box { width: 60%; padding: 25px; display: flex; flex-direction: column; justify-content: center; }
+        .pdf-point-label { font-weight: bold; font-size: 14px; color: #666; margin-bottom: 10px; display: block; border-bottom: 1px solid #eee; }
+        .pdf-remark-content { font-size: 22px; font-weight: bold; line-height: 1.4; color: #000; }
     </style>
 </head>
 <body>
@@ -52,16 +63,13 @@
     <div class="footer-nav">
         <button class="btn-export bg-pdf" onclick="generatePDF()">📄 Export PDF</button>
         <button class="btn-export bg-excel" onclick="generateExcel()">📊 Export Excel</button>
-        <button onclick="clearAll()" style="grid-column: span 2; background:none; border:none; color:red; font-size:11px; margin-top:5px;">Reset All Data</button>
+        <button onclick="clearAll()" style="grid-column: span 2; background:none; border:none; color:red; font-size:11px; margin-top:5px; cursor:pointer;">Reset All Data</button>
     </div>
 
     <input type="file" id="camera-in" accept="image/*" capture="environment" style="display:none" onchange="handleNewPhoto(this)">
 
     <div id="pdf-container">
-        <h1 style="border-bottom: 2px solid #333;">Floor Walk Report</h1>
-        <div id="pdf-header-meta" style="margin-bottom: 20px;"></div>
-        <div id="pdf-content-list"></div>
-    </div>
+        </div>
 
 <script>
     let obs = JSON.parse(localStorage.getItem('walk_v2')) || [];
@@ -125,25 +133,37 @@
             card.className = 'card';
             if (!item.isSaved) {
                 activeEdit = true;
-                card.innerHTML = `<img src="${item.img}" class="preview-img"><div class="card-body"><strong>Point #${index+1} Remarks:</strong><textarea id="remark-${item.id}" class="remark-text"></textarea><button class="btn-save-next" onclick="savePoint(${item.id})">💾 Save Point</button></div>`;
+                card.innerHTML = `
+                    <img src="${item.img}" class="preview-img">
+                    <div class="card-body">
+                        <strong>Point #${index+1} Remarks:</strong>
+                        <textarea id="remark-${item.id}" class="remark-text" placeholder="Describe the issue..."></textarea>
+                        <button class="btn-save-next" onclick="savePoint(${item.id})">💾 Save Point</button>
+                    </div>`;
             } else {
-                card.innerHTML = `<button style="position:absolute;top:5px;right:5px;background:red;color:white;border:none;border-radius:50%;width:25px;height:25px;" onclick="del(${item.id})">×</button><div style="display:flex; padding:10px; gap:10px; align-items:center;"><img src="${item.img}" style="width:70px; height:70px; object-fit:cover; border-radius:5px;"><div><strong>Point #${index+1}:</strong> ${item.remark}</div></div>`;
+                card.innerHTML = `
+                    <button style="position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.7);color:white;border:none;border-radius:50%;width:30px;height:30px;font-weight:bold;z-index:10;" onclick="del(${item.id})">×</button>
+                    <div style="display:flex; padding:15px; gap:15px; align-items:center;">
+                        <img src="${item.img}" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                        <div style="flex:1;">
+                            <div style="font-size:12px; color:#777;">POINT #${index+1}</div>
+                            <div style="font-size:16px; font-weight:bold;">${item.remark}</div>
+                        </div>
+                    </div>`;
             }
             list.appendChild(card);
         });
         document.getElementById('action-zone').style.display = activeEdit ? 'none' : 'block';
     }
 
-    function del(id) { if(confirm("Delete?")) { obs = obs.filter(o => o.id !== id); sync(); updateUI(); } }
+    function del(id) { if(confirm("Delete this point?")) { obs = obs.filter(o => o.id !== id); sync(); updateUI(); } }
 
-    function clearAll() { if(confirm("Clear All?")) { localStorage.clear(); location.reload(); } }
+    function clearAll() { if(confirm("This will delete all observations. Are you sure?")) { localStorage.clear(); location.reload(); } }
 
-    // EXCEL EXPORT LOGIC
+    // --- EXPORT TO EXCEL ---
     function generateExcel() {
         const store = document.getElementById('store').value || 'N/A';
         const auditor = document.getElementById('user').value || 'N/A';
-        
-        // Prepare Data for Excel
         const excelData = obs.filter(o => o.isSaved).map((item, index) => ({
             "Point #": index + 1,
             "Store": store,
@@ -151,39 +171,62 @@
             "Date": new Date().toLocaleDateString(),
             "Observation / Remarks": item.remark
         }));
-
-        if(excelData.length === 0) return alert("Add some saved points first!");
-
+        if(excelData.length === 0) return alert("Save some observations first!");
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Floor Walk");
-        
-        // Save File
-        XLSX.writeFile(workbook, `FloorWalk_${store}.xlsx`);
+        XLSX.writeFile(workbook, `Audit_${store}.xlsx`);
     }
 
-    // PDF EXPORT LOGIC (Side-by-side)
+    // --- EXPORT TO PDF (Enhanced Design) ---
     async function generatePDF() {
         const store = document.getElementById('store').value || 'N/A';
         const auditor = document.getElementById('user').value || 'N/A';
         const pdfContainer = document.getElementById('pdf-container');
-        const contentList = document.getElementById('pdf-content-list');
-        
-        pdfContainer.style.display = 'block';
-        document.getElementById('pdf-header-meta').innerHTML = `Store: ${store} | Auditor: ${auditor} | Date: ${new Date().toLocaleDateString()}`;
-        contentList.innerHTML = '';
+        const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 
-        obs.filter(o => o.isSaved).forEach((item, index) => {
+        const savedObs = obs.filter(o => o.isSaved);
+        if (savedObs.length === 0) return alert("Please save at least one point.");
+
+        // Build the HTML for PDF
+        pdfContainer.style.display = 'block';
+        pdfContainer.innerHTML = `
+            <h1 class="pdf-report-title">Retail Audit Report</h1>
+            <div class="pdf-meta-section">
+                <div><strong>STORE:</strong> ${store}</div>
+                <div><strong>AUDITOR:</strong> ${auditor}</div>
+                <div><strong>DATE:</strong> ${dateStr}</div>
+            </div>
+            <div id="pdf-content-list"></div>
+        `;
+
+        const contentList = document.getElementById('pdf-content-list');
+        savedObs.forEach((item, index) => {
             contentList.innerHTML += `
-                <div class="pdf-row">
-                    <div class="pdf-col-left"><img src="${item.img}" class="pdf-img"></div>
-                    <div class="pdf-col-right"><strong>POINT #${index + 1}</strong><p style="font-size:13px;">${item.remark}</p></div>
+                <div class="pdf-item-card">
+                    <div class="pdf-photo-box">
+                        <img src="${item.img}">
+                    </div>
+                    <div class="pdf-text-box">
+                        <span class="pdf-point-label">OBSERVATION POINT #${index + 1}</span>
+                        <div class="pdf-remark-content">${item.remark}</div>
+                    </div>
                 </div>`;
         });
 
-        const opt = { margin: 10, filename: `Audit_${store}.pdf`, html2canvas: { scale: 2 }, jsPDF: { format: 'a4' } };
-        await html2pdf().set(opt).from(pdfContainer).save();
-        pdfContainer.style.display = 'none';
+        const opt = { 
+            margin: 10, 
+            filename: `Audit_${store}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true }, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+        };
+
+        try {
+            await html2pdf().set(opt).from(pdfContainer).save();
+        } finally {
+            pdfContainer.style.display = 'none';
+        }
     }
 </script>
 </body>
