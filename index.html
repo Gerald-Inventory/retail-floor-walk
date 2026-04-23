@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retail Audit Pro - Multi-Export</title>
+    <title>Retail Audit Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -11,7 +11,7 @@
         :root { --blue: #007bff; --green: #28a745; --orange: #fd7e14; --dark: #333; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 140px; }
         
-        /* --- Mobile App UI Styling --- */
+        /* App UI */
         .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); }
         .input-box { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; position: relative; }
@@ -20,36 +20,62 @@
         .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 10px; }
         .btn-save-next { width: 100%; background: var(--green); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; }
         
-        /* --- Footer & Buttons --- */
         .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 1000; box-sizing: border-box; }
-        .btn-export { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; text-align: center; }
+        .btn-export { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; }
         .bg-pdf { background: var(--dark); }
         .bg-excel { background: var(--orange); }
-        .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; width: 100%; }
+        .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
 
-        /* --- PDF EXPORT DESIGN (Hidden on Screen) --- */
+        /* --- PDF EXPORT DESIGN --- */
         #pdf-container { 
-            padding: 40px; 
+            padding: 30px; 
             color: #000; 
             background: white; 
-            border: 10px double #333; /* The Global Boarder */
+            border: 5px double #000; /* Full 4-side border */
             display: none; 
-            width: 750px; /* Fixed width for consistent scaling */
+            width: 700px; 
+            margin: 0 auto;
         }
-        .pdf-report-title { text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; font-size: 28px; }
-        .pdf-meta-section { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; font-size: 16px; }
-        .pdf-item-card { display: flex; border: 1px solid #ccc; margin-bottom: 25px; page-break-inside: avoid; background: #fff; }
-        .pdf-photo-box { width: 40%; border-right: 1px solid #ccc; background: #f9f9f9; display: flex; align-items: center; justify-content: center; }
-        .pdf-photo-box img { width: 100%; height: 250px; object-fit: cover; display: block; }
-        .pdf-text-box { width: 60%; padding: 25px; display: flex; flex-direction: column; justify-content: center; }
-        .pdf-point-label { font-weight: bold; font-size: 14px; color: #666; margin-bottom: 10px; display: block; border-bottom: 1px solid #eee; }
-        .pdf-remark-content { font-size: 22px; font-weight: bold; line-height: 1.4; color: #000; }
+        .pdf-report-title { text-align: center; text-transform: uppercase; margin-bottom: 10px; font-size: 26px; font-weight: 900; }
+        .pdf-meta { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; font-size: 14px; font-weight: bold; }
+        
+        .pdf-item-block { 
+            margin-bottom: 40px; 
+            page-break-inside: avoid; 
+            display: flex; 
+            flex-direction: column;
+        }
+        .pdf-point-label { 
+            font-size: 16px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            margin-bottom: 5px;
+            align-self: flex-start; /* Aligns to left border */
+        }
+        .pdf-img-frame { 
+            width: 100%; 
+            border: 1px solid #000; 
+            margin-bottom: 10px;
+        }
+        .pdf-img-frame img { 
+            width: 100%; 
+            max-height: 400px; 
+            object-fit: contain; 
+            display: block; 
+        }
+        .pdf-remark-area { 
+            font-size: 24px; /* Bigger remarks */
+            font-weight: bold; 
+            line-height: 1.3; 
+            padding: 5px 0;
+            color: #000;
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h2 style="margin:0; color:var(--blue);">Retail Floor Walk</h2>
+        <h2 style="margin:0; color:var(--blue);">Store Visit</h2>
         <input type="text" id="store" class="input-box" placeholder="Store Name" oninput="saveH()">
         <input type="text" id="user" class="input-box" placeholder="Auditor Name" oninput="saveH()">
     </div>
@@ -57,7 +83,7 @@
     <div id="observation-list"></div>
 
     <div id="action-zone" style="text-align:center; padding: 10px 0;">
-        <button class="btn-cam" id="cam-btn" onclick="document.getElementById('camera-in').click()">📸 Take New Picture</button>
+        <button class="btn-cam" onclick="document.getElementById('camera-in').click()">📸 Take New Picture</button>
     </div>
 
     <div class="footer-nav">
@@ -69,7 +95,10 @@
     <input type="file" id="camera-in" accept="image/*" capture="environment" style="display:none" onchange="handleNewPhoto(this)">
 
     <div id="pdf-container">
-        </div>
+        <h1 class="pdf-report-title">Store Visit Points</h1>
+        <div class="pdf-meta" id="pdf-meta-data"></div>
+        <div id="pdf-content-list"></div>
+    </div>
 
 <script>
     let obs = JSON.parse(localStorage.getItem('walk_v2')) || [];
@@ -99,11 +128,9 @@
                     canvas.height = img.height * scale;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                    
+                    const compressed = canvas.toDataURL('image/jpeg', 0.8);
                     obs.push({ id: Date.now(), img: compressed, remark: '', isSaved: false });
-                    sync();
-                    updateUI();
+                    sync(); updateUI();
                 };
             };
             reader.readAsDataURL(input.files[0]);
@@ -118,8 +145,7 @@
         if (item && remarkInput) {
             item.remark = remarkInput.value;
             item.isSaved = true;
-            sync();
-            updateUI();
+            sync(); updateUI();
         }
     }
 
@@ -127,106 +153,69 @@
         const list = document.getElementById('observation-list');
         list.innerHTML = '';
         let activeEdit = false;
-        
         obs.forEach((item, index) => {
             const card = document.createElement('div');
             card.className = 'card';
             if (!item.isSaved) {
                 activeEdit = true;
-                card.innerHTML = `
-                    <img src="${item.img}" class="preview-img">
-                    <div class="card-body">
-                        <strong>Point #${index+1} Remarks:</strong>
-                        <textarea id="remark-${item.id}" class="remark-text" placeholder="Describe the issue..."></textarea>
-                        <button class="btn-save-next" onclick="savePoint(${item.id})">💾 Save Point</button>
-                    </div>`;
+                card.innerHTML = `<img src="${item.img}" class="preview-img"><div class="card-body"><strong>Point #${index+1} Remarks:</strong><textarea id="remark-${item.id}" class="remark-text"></textarea><button class="btn-save-next" onclick="savePoint(${item.id})">💾 Save Point</button></div>`;
             } else {
-                card.innerHTML = `
-                    <button style="position:absolute;top:10px;right:10px;background:rgba(255,0,0,0.7);color:white;border:none;border-radius:50%;width:30px;height:30px;font-weight:bold;z-index:10;" onclick="del(${item.id})">×</button>
-                    <div style="display:flex; padding:15px; gap:15px; align-items:center;">
-                        <img src="${item.img}" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
-                        <div style="flex:1;">
-                            <div style="font-size:12px; color:#777;">POINT #${index+1}</div>
-                            <div style="font-size:16px; font-weight:bold;">${item.remark}</div>
-                        </div>
-                    </div>`;
+                card.innerHTML = `<button style="position:absolute;top:10px;right:10px;background:red;color:white;border:none;border-radius:50%;width:30px;height:30px;" onclick="del(${item.id})">×</button>
+                <div style="display:flex; padding:15px; gap:15px; align-items:center;"><img src="${item.img}" style="width:70px; height:70px; object-fit:cover; border-radius:5px;"><div><strong>Point #${index+1}:</strong> ${item.remark}</div></div>`;
             }
             list.appendChild(card);
         });
         document.getElementById('action-zone').style.display = activeEdit ? 'none' : 'block';
     }
 
-    function del(id) { if(confirm("Delete this point?")) { obs = obs.filter(o => o.id !== id); sync(); updateUI(); } }
+    function del(id) { if(confirm("Delete?")) { obs = obs.filter(o => o.id !== id); sync(); updateUI(); } }
+    function clearAll() { if(confirm("Reset Everything?")) { localStorage.clear(); location.reload(); } }
 
-    function clearAll() { if(confirm("This will delete all observations. Are you sure?")) { localStorage.clear(); location.reload(); } }
-
-    // --- EXPORT TO EXCEL ---
     function generateExcel() {
         const store = document.getElementById('store').value || 'N/A';
-        const auditor = document.getElementById('user').value || 'N/A';
-        const excelData = obs.filter(o => o.isSaved).map((item, index) => ({
-            "Point #": index + 1,
-            "Store": store,
-            "Auditor": auditor,
-            "Date": new Date().toLocaleDateString(),
-            "Observation / Remarks": item.remark
-        }));
-        if(excelData.length === 0) return alert("Save some observations first!");
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Floor Walk");
-        XLSX.writeFile(workbook, `Audit_${store}.xlsx`);
+        const data = obs.filter(o => o.isSaved).map((item, i) => ({"#": i+1, "Store": store, "Remarks": item.remark}));
+        if(!data.length) return alert("No saved points!");
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Audit");
+        XLSX.writeFile(wb, `StoreVisit_${store}.xlsx`);
     }
 
-    // --- EXPORT TO PDF (Enhanced Design) ---
     async function generatePDF() {
         const store = document.getElementById('store').value || 'N/A';
         const auditor = document.getElementById('user').value || 'N/A';
         const pdfContainer = document.getElementById('pdf-container');
-        const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-
-        const savedObs = obs.filter(o => o.isSaved);
-        if (savedObs.length === 0) return alert("Please save at least one point.");
-
-        // Build the HTML for PDF
-        pdfContainer.style.display = 'block';
-        pdfContainer.innerHTML = `
-            <h1 class="pdf-report-title">Retail Audit Report</h1>
-            <div class="pdf-meta-section">
-                <div><strong>STORE:</strong> ${store}</div>
-                <div><strong>AUDITOR:</strong> ${auditor}</div>
-                <div><strong>DATE:</strong> ${dateStr}</div>
-            </div>
-            <div id="pdf-content-list"></div>
-        `;
-
         const contentList = document.getElementById('pdf-content-list');
-        savedObs.forEach((item, index) => {
+        const meta = document.getElementById('pdf-meta-data');
+
+        const saved = obs.filter(o => o.isSaved);
+        if(!saved.length) return alert("Save points first!");
+
+        pdfContainer.style.display = 'block';
+        meta.innerHTML = `<span>STORE: ${store}</span><span>AUDITOR: ${auditor}</span><span>DATE: ${new Date().toLocaleDateString()}</span>`;
+        contentList.innerHTML = '';
+
+        saved.forEach((item, index) => {
             contentList.innerHTML += `
-                <div class="pdf-item-card">
-                    <div class="pdf-photo-box">
+                <div class="pdf-item-block">
+                    <div class="pdf-point-label">STORE VISIT POINT #${index + 1}</div>
+                    <div class="pdf-img-frame">
                         <img src="${item.img}">
                     </div>
-                    <div class="pdf-text-box">
-                        <span class="pdf-point-label">OBSERVATION POINT #${index + 1}</span>
-                        <div class="pdf-remark-content">${item.remark}</div>
-                    </div>
+                    <div class="pdf-remark-area">${item.remark}</div>
                 </div>`;
         });
 
         const opt = { 
-            margin: 10, 
-            filename: `Audit_${store}.pdf`, 
+            margin: 5, 
+            filename: `StoreVisit_${store}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true }, 
+            html2canvas: { scale: 2 }, 
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
         };
 
-        try {
-            await html2pdf().set(opt).from(pdfContainer).save();
-        } finally {
-            pdfContainer.style.display = 'none';
-        }
+        await html2pdf().set(opt).from(pdfContainer).save();
+        pdfContainer.style.display = 'none';
     }
 </script>
 </body>
