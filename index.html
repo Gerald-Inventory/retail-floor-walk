@@ -33,10 +33,9 @@
             padding: 40px;
             box-sizing: border-box;
             border: 8px double #000; /* Full 4-side border */
-            height: 1120px; /* Approximate A4 height in px */
+            min-height: 1120px; /* Changed from height to min-height to prevent text overflow layout crashes */
             position: relative;
             page-break-after: always;
-            overflow: hidden;
         }
 
         .pdf-report-title { text-align: center; text-transform: uppercase; margin-bottom: 5px; font-size: 24px; font-weight: 900; }
@@ -60,7 +59,7 @@
 
         .pdf-col-text { width: 60%; }
         .pdf-point-label { font-size: 12px; color: #666; font-weight: bold; margin-bottom: 4px; display: block; }
-        .pdf-remark-val { font-size: 18px; font-weight: bold; line-height: 1.2; color: #000; }
+        .pdf-remark-val { font-size: 18px; font-weight: bold; line-height: 1.2; color: #000; white-space: pre-wrap; word-break: break-word; }
     </style>
 </head>
 <body>
@@ -175,17 +174,19 @@
         const saved = obs.filter(o => o.isSaved);
         if(!saved.length) return alert("Save points first!");
 
+        // 1. Reveal container so images can build layout properties safely
         pdfContainer.style.display = 'block';
         pdfContainer.innerHTML = '';
         
         let currentIdx = 0;
         let pageNum = 1;
+        const imageLoadPromises = [];
 
+        // 2. Generate the layout structure sequentially
         while (currentIdx < saved.length) {
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page';
             
-            // Header for every page
             pageDiv.innerHTML = `
                 <h1 class="pdf-report-title">Store Visit Points</h1>
                 <div class="pdf-meta">
@@ -195,22 +196,39 @@
                 </div>
             `;
 
-            // Determine how many items for this page
             const itemsPerPage = (pageNum === 1) ? 3 : 4;
             const pageItems = saved.slice(currentIdx, currentIdx + itemsPerPage);
 
             pageItems.forEach((item, i) => {
                 const globalIdx = currentIdx + i + 1;
-                pageDiv.innerHTML += `
-                    <div class="pdf-row">
-                        <div class="pdf-col-img">
-                            <span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>
-                            <img src="${item.img}">
-                        </div>
-                        <div class="pdf-col-text">
-                            <div style="margin-top:20px;" class="pdf-remark-val">${item.remark}</div>
-                        </div>
-                    </div>`;
+                
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'pdf-row';
+                rowDiv.innerHTML = `
+                    <div class="pdf-col-img">
+                        <span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>
+                        <img src="${item.img}" class="pdf-render-target">
+                    </div>
+                    <div class="pdf-col-text">
+                        <div style="margin-top:20px;" class="pdf-remark-val">${item.remark || 'No remarks provided.'}</div>
+                    </div>
+                `;
+                
+                // Track when this particular image has completely compiled internally inside DOM
+                const targetImg = rowDiv.querySelector('.pdf-render-target');
+                if (targetImg) {
+                    const p = new Promise((resolve) => {
+                        if (targetImg.complete) {
+                            resolve();
+                        } else {
+                            targetImg.onload = () => resolve();
+                            targetImg.onerror = () => resolve(); // safety workaround if image is corrupted
+                        }
+                    });
+                    imageLoadPromises.push(p);
+                }
+
+                pageDiv.appendChild(rowDiv);
             });
 
             pdfContainer.appendChild(pageDiv);
@@ -218,16 +236,28 @@
             pageNum++;
         }
 
+        // 3. CRITICAL: Force the execution script to wait until all image nodes are 100% loaded
+        await Promise.all(imageLoadPromises);
+
+        // 4. Run the html2pdf conversion
         const opt = { 
             margin: 0, 
             filename: `StoreVisit_${store}.pdf`, 
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 }, 
+            html2canvas: { scale: 2, useCORS: true, logging: false }, 
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
         };
 
-        await html2pdf().set(opt).from(pdfContainer).save();
-        pdfContainer.style.display = 'none';
+        try {
+            await html2pdf().set(opt).from(pdfContainer).save();
+        } catch (err) {
+            console.error("PDF generation failed:", err);
+            alert("An error occurred during PDF generation. Please try again.");
+        } finally {
+            // Hide container again clean up
+            pdfContainer.style.display = 'none';
+            pdfContainer.innerHTML = '';
+        }
     }
 </script>
 </body>
