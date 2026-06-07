@@ -33,7 +33,7 @@
             padding: 40px;
             box-sizing: border-box;
             border: 8px double #000; /* Full 4-side border */
-            min-height: 1120px; /* Changed from height to min-height to prevent text overflow layout crashes */
+            min-height: 1120px;
             position: relative;
             page-break-after: always;
         }
@@ -43,7 +43,7 @@
         
         .pdf-row { 
             display: flex; 
-            margin-bottom: 15px; 
+            margin-bottom: 25px; 
             align-items: flex-start;
             gap: 15px;
         }
@@ -58,7 +58,6 @@
         }
 
         .pdf-col-text { width: 60%; }
-        .pdf-point-label { font-size: 12px; color: #666; font-weight: bold; margin-bottom: 4px; display: block; }
         .pdf-remark-val { font-size: 18px; font-weight: bold; line-height: 1.2; color: #000; white-space: pre-wrap; word-break: break-word; }
     </style>
 </head>
@@ -200,17 +199,16 @@
             const pageItems = saved.slice(currentIdx, currentIdx + itemsPerPage);
 
             pageItems.forEach((item, i) => {
-                const globalIdx = currentIdx + i + 1;
-                
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'pdf-row';
+                
+                // Plain format: stripped out "<span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>"
                 rowDiv.innerHTML = `
                     <div class="pdf-col-img">
-                        <span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>
                         <img src="${item.img}" class="pdf-render-target">
                     </div>
                     <div class="pdf-col-text">
-                        <div style="margin-top:20px;" class="pdf-remark-val">${item.remark || 'No remarks provided.'}</div>
+                        <div class="pdf-remark-val">${item.remark || 'No remarks provided.'}</div>
                     </div>
                 `;
                 
@@ -222,7 +220,7 @@
                             resolve();
                         } else {
                             targetImg.onload = () => resolve();
-                            targetImg.onerror = () => resolve(); // safety workaround if image is corrupted
+                            targetImg.onerror = () => resolve(); 
                         }
                     });
                     imageLoadPromises.push(p);
@@ -236,10 +234,10 @@
             pageNum++;
         }
 
-        // 3. CRITICAL: Force the execution script to wait until all image nodes are 100% loaded
+        // 3. Wait until all image nodes are 100% loaded
         await Promise.all(imageLoadPromises);
 
-        // 4. Run the html2pdf conversion
+        // 4. Run html2pdf conversion
         const opt = { 
             margin: 0, 
             filename: `StoreVisit_${store}.pdf`, 
@@ -254,7 +252,6 @@
             console.error("PDF generation failed:", err);
             alert("An error occurred during PDF generation. Please try again.");
         } finally {
-            // Hide container again clean up
             pdfContainer.style.display = 'none';
             pdfContainer.innerHTML = '';
         }
