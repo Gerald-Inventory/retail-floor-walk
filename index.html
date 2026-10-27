@@ -1,261 +1,463 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retail Audit Pro</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <style>
-        :root { --blue: #007bff; --green: #28a745; --orange: #fd7e14; --dark: #333; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; padding-bottom: 140px; }
-        
-        /* App UI */
-        .header { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-bottom: 4px solid var(--blue); }
-        .input-box { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .card { background: white; border-radius: 12px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; position: relative; }
-        .preview-img { width: 100%; height: auto; display: block; background: #eee; }
-        .card-body { padding: 15px; }
-        .remark-text { width: 100%; height: 100px; padding: 10px; border: 2px solid var(--blue); border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 10px; }
-        .btn-save-next { width: 100%; background: var(--green); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 16px; }
-        
-        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; z-index: 1000; box-sizing: border-box; }
-        .btn-export { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; }
-        .bg-pdf { background: var(--dark); }
-        .bg-excel { background: var(--orange); }
-        .btn-cam { grid-column: span 2; background: var(--blue); padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; }
-
-        /* --- PDF EXPORT DESIGN --- */
-        #pdf-container { display: none; background: #fff; width: 800px; }
-        
-        .pdf-page {
-            padding: 40px;
-            box-sizing: border-box;
-            border: 8px double #000; /* Full 4-side border */
-            min-height: 1120px;
-            position: relative;
-            page-break-after: always;
-        }
-
-        .pdf-report-title { text-align: center; text-transform: uppercase; margin-bottom: 5px; font-size: 24px; font-weight: 900; }
-        .pdf-meta { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; font-size: 14px; }
-        
-        .pdf-row { 
-            display: flex; 
-            margin-bottom: 25px; 
-            align-items: flex-start;
-            gap: 15px;
-        }
-
-        .pdf-col-img { width: 40%; }
-        .pdf-col-img img { 
-            width: 100%; 
-            border: 2px solid #333; /* Small border around picture */
-            border-radius: 4px;
-            max-height: 180px;
-            object-fit: cover;
-        }
-
-        .pdf-col-text { width: 60%; }
-        .pdf-remark-val { font-size: 18px; font-weight: bold; line-height: 1.2; color: #000; white-space: pre-wrap; word-break: break-word; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Retail Floor Walk Pro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root { --blue:#007bff; --green:#218838; --orange:#fd7e14; --red:#c62828; }
+    * { box-sizing:border-box; }
+    body { font-family:Arial, sans-serif; background:#f0f2f5; margin:0; padding:10px; padding-bottom:155px; color:#202124; }
+    .header { background:#fff; padding:15px; border-radius:10px; margin-bottom:15px; border-bottom:4px solid var(--blue); }
+    .header h2 { margin:0 0 12px; color:var(--blue); }
+    .input-box { width:100%; padding:12px; margin:5px 0; border:1px solid #ccc; border-radius:8px; font-size:16px; background:#fff; }
+    .card { background:#fff; border-radius:12px; margin-bottom:15px; overflow:hidden; box-shadow:0 3px 9px #00000012; border:1px solid #ddd; }
+    .preview-img { display:block; width:100%; max-height:480px; object-fit:contain; background:#eee; }
+    .card-body { padding:14px; }
+    .remark-text { width:100%; min-height:100px; padding:10px; border:2px solid var(--blue); border-radius:8px; font:15px Arial,sans-serif; resize:vertical; margin:10px 0; }
+    .btn { border:0; border-radius:8px; color:white; font-weight:bold; padding:12px; font-size:14px; cursor:pointer; }
+    .btn-save-next { width:100%; background:var(--green); font-size:16px; padding:14px; }
+    .btn-cam { width:100%; background:var(--blue); padding:15px; font-size:16px; }
+    .btn-delete { background:var(--red); padding:7px 10px; }
+    .btn-edit { background:#5f6368; padding:7px 10px; }
+    .saved-row { display:flex; align-items:center; gap:10px; padding:10px; }
+    .saved-thumb { width:76px; height:76px; object-fit:cover; border-radius:6px; background:#eee; flex-shrink:0; }
+    .saved-remark { white-space:pre-wrap; overflow-wrap:anywhere; margin-top:5px; }
+    .saved-actions { display:flex; gap:6px; margin-left:auto; align-self:flex-start; }
+    .status { font-size:13px; color:#4b5563; margin-top:8px; }
+    .footer-nav { position:fixed; bottom:0; left:0; width:100%; background:white; padding:10px max(10px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); box-shadow:0 -2px 10px #00000018; display:grid; grid-template-columns:1fr 1fr; gap:8px; z-index:1000; }
+    .bg-pdf { background:#333; } .bg-excel { background:var(--orange); }
+    .btn-backup { grid-column:span 2; background:#536dfe; }
+    .btn-reset { grid-column:span 2; background:none; border:0; color:#c62828; font-size:12px; padding:4px; }
+    .empty { text-align:center; background:#fff; padding:25px 15px; border-radius:10px; color:#5f6368; }
+    .hidden { display:none !important; }
+    @media (min-width:700px) { body { max-width:900px; margin:0 auto; } .footer-nav { left:50%; transform:translateX(-50%); max-width:900px; } }
+  </style>
 </head>
 <body>
+  <div class="header">
+    <h2>Retail Floor Walk</h2>
+    <input type="text" id="store" class="input-box" placeholder="Store Name" autocomplete="organization">
+    <input type="text" id="auditor" class="input-box" placeholder="Auditor Name" autocomplete="name">
+    <div class="status" id="status" role="status" aria-live="polite">Opening audit storage…</div>
+  </div>
 
-    <div class="header">
-        <h2 style="margin:0; color:var(--blue);">Store Visit</h2>
-        <input type="text" id="store" class="input-box" placeholder="Store Name" oninput="saveH()">
-        <input type="text" id="user" class="input-box" placeholder="Auditor Name" oninput="saveH()">
-    </div>
+  <div id="observation-list"></div>
+  <div id="action-zone" style="text-align:center;padding:10px 0 20px;">
+    <button class="btn btn-cam" id="cam-btn" type="button">📸 Take New Picture</button>
+  </div>
+  <input type="file" id="camera-in" accept="image/*" capture="environment" class="hidden">
+  <input type="file" id="backup-in" accept="application/json,.json" class="hidden">
 
-    <div id="observation-list"></div>
-
-    <div id="action-zone" style="text-align:center; padding: 10px 0;">
-        <button class="btn-cam" onclick="document.getElementById('camera-in').click()">📸 Take New Picture</button>
-    </div>
-
-    <div class="footer-nav">
-        <button class="btn-export bg-pdf" onclick="generatePDF()">📄 Export PDF</button>
-        <button class="btn-export bg-excel" onclick="generateExcel()">📊 Export Excel</button>
-        <button onclick="clearAll()" style="grid-column: span 2; background:none; border:none; color:red; font-size:11px; margin-top:5px; cursor:pointer;">Reset All Data</button>
-    </div>
-
-    <input type="file" id="camera-in" accept="image/*" capture="environment" style="display:none" onchange="handleNewPhoto(this)">
-
-    <div id="pdf-container"></div>
+  <div class="footer-nav">
+    <button class="btn bg-pdf" id="pdf-btn" type="button">📄 Export PDF</button>
+    <button class="btn bg-excel" id="excel-btn" type="button">📊 Export Excel</button>
+    <button class="btn btn-backup" id="backup-btn" type="button">💾 Backup / Restore Audit</button>
+    <button class="btn-reset" id="reset-btn" type="button">Reset All Data</button>
+  </div>
 
 <script>
-    let obs = JSON.parse(localStorage.getItem('walk_v2')) || [];
+(() => {
+  'use strict';
+  const DB_NAME = 'RetailFloorWalkDB';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'observations';
+  const LEGACY_KEY = 'walk_v2';
+  let db;
+  let observations = [];
+  let objectUrls = [];
+  let busy = false;
 
-    window.onload = () => {
-        document.getElementById('store').value = localStorage.getItem('walk_st') || '';
-        document.getElementById('user').value = localStorage.getItem('walk_us') || '';
-        updateUI();
-    };
+  const $ = id => document.getElementById(id);
+  const setStatus = message => { $('status').textContent = message; };
 
-    function saveH() {
-        localStorage.setItem('walk_st', document.getElementById('store').value);
-        localStorage.setItem('walk_us', document.getElementById('user').value);
-    }
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) return reject(new Error('IndexedDB is not supported in this browser.'));
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        if (!database.objectStoreNames.contains(STORE_NAME)) database.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('Could not open audit storage.'));
+      request.onblocked = () => reject(new Error('Audit storage is blocked by another open tab. Close other copies and retry.'));
+    });
+  }
 
-    function handleNewPhoto(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const maxWidth = 800;
-                    const scale = maxWidth / img.width;
-                    canvas.width = maxWidth;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.8);
-                    obs.push({ id: Date.now(), img: compressed, remark: '', isSaved: false });
-                    sync(); updateUI();
-                };
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
+  function storeRequest(mode, operation) {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, mode);
+      const store = tx.objectStore(STORE_NAME);
+      let request;
+      try { request = operation(store); } catch (err) { reject(err); return; }
+      let result;
+      if (request) {
+        request.onsuccess = () => { result = request.result; };
+        request.onerror = () => reject(request.error || new Error('Storage request failed.'));
+      }
+      tx.oncomplete = () => resolve(result);
+      tx.onerror = () => reject(tx.error || new Error('Could not save audit data.'));
+      tx.onabort = () => reject(tx.error || new Error('Audit storage transaction was cancelled.'));
+    });
+  }
+  const getAll = () => storeRequest('readonly', s => s.getAll());
+  const putOne = item => storeRequest('readwrite', s => s.put(item));
+  const deleteOne = id => storeRequest('readwrite', s => s.delete(id));
+  const clearStore = () => storeRequest('readwrite', s => s.clear());
 
-    function sync() { localStorage.setItem('walk_v2', JSON.stringify(obs)); }
+  function dataURLToBlob(dataURL) {
+    const parts = dataURL.split(',');
+    const mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    const binary = atob(parts[1]);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
 
-    function savePoint(id) {
-        const item = obs.find(o => o.id === id);
-        const remarkInput = document.querySelector(`#remark-${id}`);
-        if (item && remarkInput) {
-            item.remark = remarkInput.value;
-            item.isSaved = true;
-            sync(); updateUI();
-        }
-    }
-
-    function updateUI() {
-        const list = document.getElementById('observation-list');
-        list.innerHTML = '';
-        let activeEdit = false;
-        obs.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            if (!item.isSaved) {
-                activeEdit = true;
-                card.innerHTML = `<img src="${item.img}" class="preview-img"><div class="card-body"><strong>Point #${index+1} Remarks:</strong><textarea id="remark-${item.id}" class="remark-text"></textarea><button class="btn-save-next" onclick="savePoint(${item.id})">💾 Save Point</button></div>`;
-            } else {
-                card.innerHTML = `<button style="position:absolute;top:10px;right:10px;background:red;color:white;border:none;border-radius:50%;width:30px;height:30px;" onclick="del(${item.id})">×</button>
-                <div style="display:flex; padding:15px; gap:15px; align-items:center;"><img src="${item.img}" style="width:70px; height:70px; object-fit:cover; border-radius:5px;"><div><strong>Point #${index+1}:</strong> ${item.remark}</div></div>`;
-            }
-            list.appendChild(card);
-        });
-        document.getElementById('action-zone').style.display = activeEdit ? 'none' : 'block';
-    }
-
-    function del(id) { if(confirm("Delete?")) { obs = obs.filter(o => o.id !== id); sync(); updateUI(); } }
-    function clearAll() { if(confirm("Reset Everything?")) { localStorage.clear(); location.reload(); } }
-
-    function generateExcel() {
-        const store = document.getElementById('store').value || 'N/A';
-        const data = obs.filter(o => o.isSaved).map((item, i) => ({"#": i+1, "Store": store, "Remarks": item.remark}));
-        if(!data.length) return alert("No saved points!");
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Audit");
-        XLSX.writeFile(wb, `StoreVisit_${store}.xlsx`);
-    }
-
-    async function generatePDF() {
-        const store = document.getElementById('store').value || 'N/A';
-        const auditor = document.getElementById('user').value || 'N/A';
-        const pdfContainer = document.getElementById('pdf-container');
-        const saved = obs.filter(o => o.isSaved);
-        if(!saved.length) return alert("Save points first!");
-
-        // 1. Reveal container so images can build layout properties safely
-        pdfContainer.style.display = 'block';
-        pdfContainer.innerHTML = '';
-        
-        let currentIdx = 0;
-        let pageNum = 1;
-        const imageLoadPromises = [];
-
-        // 2. Generate the layout structure sequentially
-        while (currentIdx < saved.length) {
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'pdf-page';
-            
-            pageDiv.innerHTML = `
-                <h1 class="pdf-report-title">Store Visit Points</h1>
-                <div class="pdf-meta">
-                    <span>STORE: ${store}</span>
-                    <span>AUDITOR: ${auditor}</span>
-                    <span>DATE: ${new Date().toLocaleDateString()}</span>
-                </div>
-            `;
-
-            const itemsPerPage = (pageNum === 1) ? 3 : 4;
-            const pageItems = saved.slice(currentIdx, currentIdx + itemsPerPage);
-
-            pageItems.forEach((item, i) => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'pdf-row';
-                
-                // Plain format: stripped out "<span class="pdf-point-label">STORE VISIT POINT #${globalIdx}</span>"
-                rowDiv.innerHTML = `
-                    <div class="pdf-col-img">
-                        <img src="${item.img}" class="pdf-render-target">
-                    </div>
-                    <div class="pdf-col-text">
-                        <div class="pdf-remark-val">${item.remark || 'No remarks provided.'}</div>
-                    </div>
-                `;
-                
-                // Track when this particular image has completely compiled internally inside DOM
-                const targetImg = rowDiv.querySelector('.pdf-render-target');
-                if (targetImg) {
-                    const p = new Promise((resolve) => {
-                        if (targetImg.complete) {
-                            resolve();
-                        } else {
-                            targetImg.onload = () => resolve();
-                            targetImg.onerror = () => resolve(); 
-                        }
-                    });
-                    imageLoadPromises.push(p);
-                }
-
-                pageDiv.appendChild(rowDiv);
+  async function migrateLegacyData() {
+    const alreadyMigrated = localStorage.getItem('walk_v2_migrated_to_idb');
+    if (alreadyMigrated) return;
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (raw) {
+      try {
+        const legacy = JSON.parse(raw);
+        if (Array.isArray(legacy)) {
+          for (const old of legacy) {
+            if (!old || !old.img) continue;
+            await putOne({
+              id: Number(old.id) || Date.now() + Math.floor(Math.random() * 10000),
+              imgBlob: dataURLToBlob(old.img),
+              remark: String(old.remark || ''),
+              isSaved: Boolean(old.isSaved),
+              createdAt: old.createdAt || new Date().toISOString()
             });
-
-            pdfContainer.appendChild(pageDiv);
-            currentIdx += itemsPerPage;
-            pageNum++;
+          }
         }
-
-        // 3. Wait until all image nodes are 100% loaded
-        await Promise.all(imageLoadPromises);
-
-        // 4. Run html2pdf conversion
-        const opt = { 
-            margin: 0, 
-            filename: `StoreVisit_${store}.pdf`, 
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, logging: false }, 
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-        };
-
-        try {
-            await html2pdf().set(opt).from(pdfContainer).save();
-        } catch (err) {
-            console.error("PDF generation failed:", err);
-            alert("An error occurred during PDF generation. Please try again.");
-        } finally {
-            pdfContainer.style.display = 'none';
-            pdfContainer.innerHTML = '';
-        }
+      } catch (err) {
+        console.warn('Legacy audit migration issue:', err);
+        alert('Some older audit data could not be migrated automatically. If the old audit is still visible in your previous browser tab, export or copy it before clearing browser data.');
+      }
     }
+    localStorage.setItem('walk_v2_migrated_to_idb', '1');
+  }
+
+  function saveHeader() {
+    try {
+      localStorage.setItem('walk_st', $('store').value);
+      localStorage.setItem('walk_us', $('auditor').value);
+    } catch (err) { console.warn('Could not save header fields:', err); }
+  }
+
+  function safeFilename(value) {
+    return String(value || 'Store').trim().replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_').slice(0, 80) || 'Store';
+  }
+
+  function revokeObjectUrls() {
+    objectUrls.forEach(url => URL.revokeObjectURL(url));
+    objectUrls = [];
+  }
+
+  async function refresh() {
+    observations = (await getAll()).sort((a, b) => Number(a.id) - Number(b.id));
+    render();
+    const savedCount = observations.filter(o => o.isSaved).length;
+    const pendingCount = observations.length - savedCount;
+    setStatus(`${observations.length} observation(s) on this device · ${savedCount} saved${pendingCount ? ` · ${pendingCount} awaiting remarks/save` : ''}`);
+  }
+
+  function makeButton(text, className, onClick, title) {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = `btn ${className}`; button.textContent = text;
+    if (title) button.title = title;
+    button.addEventListener('click', onClick);
+    return button;
+  }
+
+  function render() {
+    revokeObjectUrls();
+    const list = $('observation-list');
+    list.replaceChildren();
+    let hasPending = false;
+    if (!observations.length) {
+      const empty = document.createElement('div'); empty.className = 'empty';
+      empty.textContent = 'No observations yet. Tap “Take New Picture” to start your floor walk.';
+      list.appendChild(empty);
+    }
+    observations.forEach((item, index) => {
+      const card = document.createElement('section'); card.className = 'card';
+      const imageUrl = URL.createObjectURL(item.imgBlob); objectUrls.push(imageUrl);
+      if (!item.isSaved) {
+        hasPending = true;
+        const img = document.createElement('img'); img.src = imageUrl; img.className = 'preview-img'; img.alt = `Observation ${index + 1}`;
+        const body = document.createElement('div'); body.className = 'card-body';
+        const label = document.createElement('strong'); label.textContent = `Point #${index + 1} Remarks:`;
+        const textarea = document.createElement('textarea'); textarea.id = `remark-${item.id}`; textarea.className = 'remark-text';
+        textarea.placeholder = 'Describe the issue, location, action required, owner or due date…'; textarea.value = item.remark || '';
+        const save = makeButton('💾 Save Point', 'btn-save-next', () => savePoint(item.id));
+        body.append(label, textarea, save); card.append(img, body);
+      } else {
+        const row = document.createElement('div'); row.className = 'saved-row';
+        const thumb = document.createElement('img'); thumb.src = imageUrl; thumb.className = 'saved-thumb'; thumb.alt = `Saved point ${index + 1}`;
+        const detail = document.createElement('div'); detail.style.flex = '1'; detail.style.minWidth = '0';
+        const heading = document.createElement('strong'); heading.textContent = `Point #${index + 1}`;
+        const remark = document.createElement('div'); remark.className = 'saved-remark'; remark.textContent = item.remark || '(No remarks entered)';
+        detail.append(heading, remark);
+        const actions = document.createElement('div'); actions.className = 'saved-actions';
+        actions.append(
+          makeButton('Edit', 'btn-edit', () => editPoint(item.id)),
+          makeButton('×', 'btn-delete', () => deletePoint(item.id), 'Delete observation')
+        );
+        row.append(thumb, detail, actions); card.appendChild(row);
+      }
+      list.appendChild(card);
+    });
+    $('action-zone').classList.toggle('hidden', hasPending);
+  }
+
+  async function savePoint(id) {
+    const item = observations.find(o => o.id === id);
+    const textarea = $(`remark-${id}`);
+    if (!item || !textarea) return;
+    item.remark = textarea.value.trim(); item.isSaved = true; item.updatedAt = new Date().toISOString();
+    try { await putOne(item); await refresh(); setStatus('Point saved successfully.'); }
+    catch (err) { alert(`Could not save this point. Your changes may not be stored. ${err.message || ''}`); }
+  }
+
+  async function editPoint(id) {
+    const item = observations.find(o => o.id === id);
+    if (!item) return;
+    item.isSaved = false;
+    try { await putOne(item); await refresh(); const field = $(`remark-${id}`); if (field) { field.focus(); field.setSelectionRange(field.value.length, field.value.length); } }
+    catch (err) { alert(`Could not edit this point: ${err.message || err}`); }
+  }
+
+  async function deletePoint(id) {
+    if (!confirm('Delete this observation and its photo? This cannot be undone unless you have a backup.')) return;
+    try { await deleteOne(id); await refresh(); }
+    catch (err) { alert(`Could not delete observation: ${err.message || err}`); }
+  }
+
+  function compressPhoto(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Could not read the selected photo.'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('This photo format could not be opened. Try taking a new picture.'));
+        img.onload = () => {
+          const maxDimension = 2000;
+          const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+          const width = Math.max(1, Math.round(img.naturalWidth * scale));
+          const height = Math.max(1, Math.round(img.naturalHeight * scale));
+          const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d', { alpha: false });
+          if (!ctx) return reject(new Error('Could not prepare the photo for saving.'));
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height); ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(blob => {
+            canvas.width = 1; canvas.height = 1;
+            if (!blob) return reject(new Error('Photo compression failed. Please try again.'));
+            resolve(blob);
+          }, 'image/jpeg', 0.88);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleNewPhoto(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('Please select an image file.'); input.value = ''; return; }
+    $('cam-btn').disabled = true; setStatus('Preparing photo…');
+    try {
+      const imgBlob = await compressPhoto(file);
+      const item = { id: Date.now(), imgBlob, remark: '', isSaved: false, createdAt: new Date().toISOString() };
+      // Avoid a same-millisecond ID collision.
+      while (observations.some(o => o.id === item.id)) item.id++;
+      await putOne(item); await refresh();
+      setStatus(`Photo added (${Math.round(imgBlob.size / 1024)} KB). Enter remarks and save the point.`);
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } catch (err) {
+      alert(`Photo was not saved. ${err.message || err}\n\nCheck that your browser has storage space available, then try again.`);
+      setStatus('Photo could not be saved.');
+    } finally { $('cam-btn').disabled = false; input.value = ''; }
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Could not read photo for export.')); reader.readAsDataURL(blob);
+    });
+  }
+
+  function addWrappedText(doc, text, x, y, maxWidth, bottomY, lineHeight) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const lines = doc.splitTextToSize(String(text || '(No remarks entered)'), maxWidth);
+    let cursorY = y;
+    for (const line of lines) {
+      if (cursorY + lineHeight > bottomY) {
+        doc.addPage(); cursorY = 20;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text('Observation remarks (continued)', x, cursorY);
+        cursorY += 9; doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+      }
+      doc.text(line, x, cursorY); cursorY += lineHeight;
+    }
+    return Math.min(cursorY, pageHeight - 12);
+  }
+
+  async function generatePDF() {
+    if (busy) return;
+    const all = (await getAll()).sort((a, b) => Number(a.id) - Number(b.id));
+    const saved = all.filter(o => o.isSaved);
+    const pending = all.length - saved.length;
+    if (!saved.length) { alert('There are no saved points to export. Take a photo, enter remarks and save the point first.'); return; }
+    if (pending && !confirm(`${pending} point(s) are not saved yet and will not be included. Export the ${saved.length} saved point(s) now?`)) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('The PDF library did not load. Connect to the internet and reload the page.'); return; }
+    busy = true; $('pdf-btn').disabled = true; setStatus('Creating PDF… Please keep this page open.');
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4', compress:true });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const store = $('store').value.trim() || 'N/A';
+      const auditor = $('auditor').value.trim() || 'N/A';
+      const date = new Date().toLocaleDateString();
+      const margin = 15;
+      for (let i = 0; i < saved.length; i++) {
+        if (i > 0) doc.addPage();
+        const item = saved[i];
+        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('Retail Floor Walk Report', margin, 17);
+        doc.setDrawColor(0, 123, 255); doc.setLineWidth(0.8); doc.line(margin, 21, pageW - margin, 21);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        doc.text(`Store: ${store}`, margin, 28);
+        doc.text(`Auditor: ${auditor}`, margin, 33);
+        doc.text(`Date: ${date}`, pageW - margin, 28, { align:'right' });
+        doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text(`POINT #${i + 1} OF ${saved.length}`, margin, 43);
+
+        const dataUrl = await blobToDataURL(item.imgBlob);
+        const props = doc.getImageProperties(dataUrl);
+        const maxW = pageW - margin * 2;
+        const maxH = 122;
+        const ratio = Math.min(maxW / props.width, maxH / props.height);
+        const imgW = props.width * ratio;
+        const imgH = props.height * ratio;
+        const imgX = (pageW - imgW) / 2;
+        const imgY = 49;
+        doc.addImage(dataUrl, 'JPEG', imgX, imgY, imgW, imgH, undefined, 'MEDIUM');
+
+        let y = imgY + imgH + 9;
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.text('Observation / Remarks', margin, y);
+        y += 7; doc.setFont('helvetica','normal'); doc.setFontSize(10);
+        addWrappedText(doc, item.remark || '(No remarks entered)', margin, y, pageW - margin * 2, pageH - 17, 5);
+      }
+      const totalPages = doc.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p); doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100);
+        doc.text(`Generated by Retail Floor Walk · Page ${p} of ${totalPages}`, pageW / 2, pageH - 7, { align:'center' });
+      }
+      doc.save(`FloorWalk_${safeFilename(store)}_${new Date().toISOString().slice(0,10)}.pdf`);
+      setStatus(`PDF exported successfully: ${saved.length} observation(s), ${totalPages} page(s).`);
+      alert(`PDF export complete.\nObservations included: ${saved.length}\nPDF pages: ${totalPages}${pending ? `\nNot included (unsaved): ${pending}` : ''}`);
+    } catch (err) {
+      console.error(err); alert(`PDF export failed. ${err.message || err}\n\nTry exporting fewer observations at a time or use a desktop browser with more available memory.`);
+      setStatus('PDF export failed. Your saved observations remain in browser storage.');
+    } finally { busy = false; $('pdf-btn').disabled = false; }
+  }
+
+  async function generateExcel() {
+    if (busy) return;
+    if (!window.XLSX) { alert('The Excel library did not load. Connect to the internet and reload the page.'); return; }
+    const all = (await getAll()).sort((a, b) => Number(a.id) - Number(b.id));
+    const saved = all.filter(o => o.isSaved);
+    const pending = all.length - saved.length;
+    if (!saved.length) { alert('Add and save at least one point first.'); return; }
+    if (pending && !confirm(`${pending} point(s) are unsaved and will not be included. Export ${saved.length} saved point(s)?`)) return;
+    const store = $('store').value.trim() || 'N/A';
+    const auditor = $('auditor').value.trim() || 'N/A';
+    const date = new Date().toLocaleDateString();
+    const rows = saved.map((item, index) => ({
+      'Point #': index + 1,
+      'Store': store,
+      'Auditor': auditor,
+      'Date': date,
+      'Observation / Remarks': item.remark || ''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:10},{wch:22},{wch:22},{wch:15},{wch:70}];
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Floor Walk');
+    XLSX.writeFile(wb, `FloorWalk_${safeFilename(store)}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    setStatus(`Excel exported successfully: ${saved.length} observation(s).`);
+  }
+
+  async function exportBackup() {
+    const all = (await getAll()).sort((a, b) => Number(a.id) - Number(b.id));
+    if (!all.length) { alert('There is no audit data to back up.'); return; }
+    const records = [];
+    for (const item of all) records.push({ id:item.id, imgDataURL:await blobToDataURL(item.imgBlob), remark:item.remark || '', isSaved:Boolean(item.isSaved), createdAt:item.createdAt || null, updatedAt:item.updatedAt || null });
+    const backup = { format:'RetailFloorWalkBackup', version:1, exportedAt:new Date().toISOString(), store:$('store').value, auditor:$('auditor').value, observations:records };
+    const blob = new Blob([JSON.stringify(backup)], {type:'application/json'});
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `FloorWalk_Backup_${safeFilename($('store').value)}_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    setStatus(`Backup downloaded: ${all.length} observation(s). Keep this file somewhere safe.`);
+  }
+
+  async function restoreBackup(file) {
+    if (!file) return;
+    try {
+      const backup = JSON.parse(await file.text());
+      if (backup.format !== 'RetailFloorWalkBackup' || !Array.isArray(backup.observations)) throw new Error('This does not look like a Retail Floor Walk backup file.');
+      if (!confirm(`Restore ${backup.observations.length} observation(s)? This will replace the audit currently stored on this device.`)) return;
+      await clearStore();
+      for (const row of backup.observations) {
+        if (!row.imgDataURL) continue;
+        await putOne({ id:Number(row.id) || Date.now(), imgBlob:dataURLToBlob(row.imgDataURL), remark:String(row.remark || ''), isSaved:Boolean(row.isSaved), createdAt:row.createdAt || new Date().toISOString(), updatedAt:row.updatedAt || null });
+      }
+      $('store').value = backup.store || ''; $('auditor').value = backup.auditor || ''; saveHeader(); await refresh();
+      alert(`Backup restored. ${observations.length} observation(s) are now available on this device.`);
+    } catch (err) { alert(`Could not restore backup. ${err.message || err}`); }
+    finally { $('backup-in').value = ''; }
+  }
+
+  async function resetAll() {
+    if (!confirm('Reset all audit data on this device, including photos and remarks? Export a backup first if you may need this data later.')) return;
+    if (!confirm('Final confirmation: permanently delete all saved observations from this browser?')) return;
+    try { await clearStore(); $('store').value = ''; $('auditor').value = ''; saveHeader(); await refresh(); setStatus('All audit observations cleared.'); }
+    catch (err) { alert(`Could not reset data: ${err.message || err}`); }
+  }
+
+  async function init() {
+    try {
+      $('store').value = localStorage.getItem('walk_st') || '';
+      $('auditor').value = localStorage.getItem('walk_us') || '';
+      db = await openDB();
+      await migrateLegacyData();
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      setStatus('Could not open local audit storage.');
+      alert(`Retail Floor Walk could not start its storage. ${err.message || err}\n\nUse a current browser and avoid private/incognito mode. Export a backup regularly.`);
+    }
+  }
+
+  $('store').addEventListener('input', saveHeader);
+  $('auditor').addEventListener('input', saveHeader);
+  $('cam-btn').addEventListener('click', () => $('camera-in').click());
+  $('camera-in').addEventListener('change', event => handleNewPhoto(event.target));
+  $('pdf-btn').addEventListener('click', generatePDF);
+  $('excel-btn').addEventListener('click', generateExcel);
+  $('backup-btn').addEventListener('click', () => {
+    const choice = prompt('Type BACKUP to download a backup, or RESTORE to load a previously downloaded backup.');
+    if (choice && choice.trim().toUpperCase() === 'BACKUP') exportBackup();
+    else if (choice && choice.trim().toUpperCase() === 'RESTORE') $('backup-in').click();
+  });
+  $('backup-in').addEventListener('change', event => restoreBackup(event.target.files && event.target.files[0]));
+  $('reset-btn').addEventListener('click', resetAll);
+  window.addEventListener('beforeunload', revokeObjectUrls);
+  init();
+})();
 </script>
 </body>
 </html>
